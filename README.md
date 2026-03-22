@@ -1,2 +1,43 @@
-# ai-power-assistant
-⚡ AI Power Assistant – An intelligent electrical system diagnostic tool that analyzes voltage, current, and load conditions using AI (Gemini) to detect faults like overvoltage/undervoltage and provide engineering insights and recommendations. Built with Flask, deployed-ready for Cloud Run.
+# ⚡ AI Power Assistant
+
+An AI-powered electrical diagnostic system that detects faults like overvoltage and undervoltage and provides intelligent engineering insights.
+
+---
+
+## 🚀 Features
+
+- 🔌 Real-time Voltage & Current Analysis  
+- ⚡ Fault Detection (Overvoltage / Undervoltage)  
+- 🤖 AI-based Engineering Explanation (Gemini API)  
+- 📊 System Efficiency Insights  
+- 🧠 Smart Recommendations  
+
+---
+
+## 🛠️ Tech Stack
+
+- Python (Flask)
+- Google Gemini API
+- HTML, CSS (Modern UI)
+- Docker (Deployment-ready)
+
+---
+
+## 🌍 Live Demo
+
+👉 (Add your Render link here later)
+
+---
+
+## 🧠 Use Case
+
+This project simulates real-world electrical monitoring systems and helps in:
+- Preventing equipment damage  
+- Improving system efficiency  
+- Providing AI-assisted diagnostics  
+
+---
+
+## 👨‍💻 Author
+
+Subham (EEE Student)
