@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Power Assistant | Gen AI Academy</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        navy: {
+                            900: '#030B1C',
+                            800: '#0A152E',
+                            700: '#112240',
+                        },
+                        electric: {
+                            cyan: '#00F0FF',
+                            blue: '#0066FF',
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'scan': 'scan 8s linear infinite',
+                    },
+                    keyframes: {
+                        scan: {
+                            '0%': { transform: 'translateY(-100%)' },
+                            '100%': { transform: 'translateY(100vh)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #030B1C;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .bg-grid {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-image: 
+                linear-gradient(rgba(0, 240, 255, 0.07) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.07) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: -2;
+        }
+
+        .bg-vignette {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: radial-gradient(circle at center, transparent 0%, #030B1C 80%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .scanner-line {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.5), transparent);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .glass-panel {
+            background: rgba(10, 21, 46, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 240, 255, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 240, 255, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-input-wrapper {
+            background: rgba(3, 11, 28, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .glass-input-wrapper:focus-within {
+            border-color: #00F0FF;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.2), inset 0 0 10px rgba(0, 240, 255, 0.1);
+        }
+
+        input, select {
+            background: transparent;
+            outline: none;
+            color: #fff;
+        }
+        
+        select option {
+            background: #0A152E;
+            color: #fff;
+        }
+
+        .btn-glow {
+            position: relative;
+            background: linear-gradient(135deg, #0066FF, #00F0FF);
+            z-index: 1;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 102, 255, 0.4);
+        }
+        
+        .btn-glow::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #00F0FF, #0066FF);
+            z-index: -1;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+        }
+
+        .btn-glow:hover::before {
+            opacity: 1;
+        }
+
+        .btn-glow:hover {
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.8);
+            transform: translateY(-2px);
+        }
+
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        @keyframes pulse-blue { 0% { box-shadow: 0 0 0 0 rgba(0, 240, 255, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(0, 240, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 240, 255, 0); } }
+        @keyframes pulse-yellow { 0% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(234, 179, 8, 0); } 100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); } }
+
+        .badge-red { border: 1px solid #ef4444; background: rgba(239, 68, 68, 0.1); color: #fca5a5; animation: pulse-red 2s infinite; }
+        .badge-blue { border: 1px solid #00F0FF; background: rgba(0, 240, 255, 0.1); color: #a5f3fc; animation: pulse-blue 2s infinite; }
+        .badge-yellow { border: 1px solid #eab308; background: rgba(234, 179, 8, 0.1); color: #fde047; animation: pulse-yellow 2s infinite; }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .data-line {
+            position: absolute;
+            left: -1px;
+            top: 5%;
+            height: 90%;
+            width: 2px;
+            background: #00F0FF;
+            box-shadow: 0 0 10px #00F0FF;
+            border-radius: 4px;
+        }
+
+        /* Power Display Styling */
+        .power-card {
+            background: rgba(0, 240, 255, 0.05);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        .power-card:hover {
+            background: rgba(0, 240, 255, 0.1);
+            box-shadow: inset 0 0 20px rgba(0, 240, 255, 0.1);
+        }
+
+        /* Efficiency Tip Styling */
+        .eff-tip {
+            position: relative;
+            background: linear-gradient(90deg, rgba(34, 197, 94, 0.1) 0%, transparent 100%);
+            border-left: 3px solid #22c55e;
+            transition: all 0.3s ease;
+        }
+        .eff-tip:hover {
+            background: linear-gradient(90deg, rgba(34, 197, 94, 0.15) 0%, transparent 100%);
+        }
+        
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 antialiased relative selection:bg-electric-cyan selection:text-navy-900">
+
+    <div class="bg-grid"></div>
+    <div class="bg-vignette"></div>
+    <div class="scanner-line animate-scan"></div>
+
+    <div class="w-full max-w-5xl z-10 flex flex-col gap-6">
+        
+        <header class="text-center space-y-2 fade-in">
+            <div class="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-full bg-navy-800/80 border border-white/10 text-xs sm:text-sm text-gray-300 backdrop-blur-sm mb-2 hover:border-electric-cyan/50 transition-colors">
+                <i data-lucide="cloud" class="w-4 h-4 text-electric-cyan"></i>
+                Google Cloud Gen AI Academy Hackathon
+            </div>
+            <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-white flex items-center justify-center gap-3">
+                <i data-lucide="cpu" class="w-10 h-10 text-electric-cyan animate-pulse-slow"></i>
+                AI Power Assistant
+            </h1>
+            <p class="text-gray-400 max-w-xl mx-auto text-sm sm:text-base">
+                Intelligent electrical grid monitoring and fault detection powered by Gemini models.
+            </p>
+        </header>
+
+        <main class="glass-panel rounded-2xl p-6 sm:p-8 w-full relative overflow-hidden fade-in hover:shadow-[0_8px_32px_0_rgba(0,102,255,0.15)]" style="animation-delay: 0.1s;">
+            <!-- Corner Accents -->
+            <div class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-electric-cyan opacity-50 rounded-tl-xl"></div>
+            <div class="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-electric-cyan opacity-50 rounded-tr-xl"></div>
+            <div class="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-electric-cyan opacity-50 rounded-bl-xl"></div>
+            <div class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-electric-cyan opacity-50 rounded-br-xl"></div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+                
+                <!-- Left Column: Inputs -->
+                <div class="lg:col-span-5 flex flex-col gap-6">
+                    <div class="flex items-center gap-2 mb-2 border-b border-white/10 pb-2">
+                        <i data-lucide="sliders-horizontal" class="w-5 h-5 text-gray-400"></i>
+                        <h2 class="text-lg font-semibold text-gray-200 tracking-wide">System Parameters</h2>
+                    </div>
+
+                    <form id="analysis-form" class="space-y-6">
+                        <div class="space-y-2">
+                            <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">Voltage (V)</label>
+                            <div class="glass-input-wrapper flex items-center rounded-lg px-4 py-3">
+                                <i data-lucide="zap" class="w-5 h-5 text-yellow-400 mr-3"></i>
+                                <input type="number" step="any" id="voltage" required placeholder="e.g., 230" class="w-full text-lg font-mono placeholder-gray-600 transition-colors" min="0" max="1000">
+                                <span class="text-gray-500 font-mono text-sm">VAC</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">Current (A)</label>
+                            <div class="glass-input-wrapper flex items-center rounded-lg px-4 py-3">
+                                <i data-lucide="plug" class="w-5 h-5 text-electric-cyan mr-3"></i>
+                                <input type="number" step="any" id="current" required placeholder="e.g., 45" class="w-full text-lg font-mono placeholder-gray-600 transition-colors" min="0" max="500">
+                                <span class="text-gray-500 font-mono text-sm">AMP</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">Load Profile</label>
+                            <div class="glass-input-wrapper flex items-center rounded-lg px-4 py-3">
+                                <i data-lucide="activity" class="w-5 h-5 text-green-400 mr-3"></i>
+                                <select id="load" class="w-full text-lg appearance-none cursor-pointer">
+                                    <option value="Low">Low (Residential)</option>
+                                    <option value="Medium" selected>Medium (Commercial)</option>
+                                    <option value="High">High (Industrial)</option>
+                                </select>
+                                <i data-lucide="chevron-down" class="w-5 h-5 text-gray-500 pointer-events-none"></i>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="analyze-btn" class="btn-glow w-full py-4 rounded-lg font-bold text-white tracking-wide flex items-center justify-center gap-3 mt-4 text-lg">
+                            <i data-lucide="scan-line" class="w-5 h-5"></i>
+                            Run AI Diagnostics
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Divider -->
+                <div class="hidden lg:block lg:col-span-1 relative">
+                    <div class="absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-electric-cyan/30 to-transparent"></div>
+                </div>
+
+                <!-- Right Column: AI Output -->
+                <div class="lg:col-span-6 flex flex-col relative min-h-[450px]">
+                    <div class="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="bot" class="w-5 h-5 text-electric-cyan"></i>
+                            <h2 class="text-lg font-semibold text-gray-200 tracking-wide">AI Telemetry Analysis</h2>
+                        </div>
+                        <div id="processing-badge" class="hidden items-center gap-2 text-xs font-mono text-electric-cyan bg-electric-cyan/10 px-3 py-1.5 rounded-full border border-electric-cyan/20 shadow-[0_0_10px_rgba(0,240,255,0.2)]">
+                            <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Analyzing via Gemini
+                        </div>
+                    </div>
+
+                    <!-- Initial State -->
+                    <div id="empty-state" class="flex-1 flex flex-col items-center justify-center text-center p-6 border border-dashed border-white/10 rounded-xl bg-black/20 transition-all hover:bg-black/30">
+                        <div class="w-20 h-20 rounded-full bg-navy-800 border border-white/10 flex items-center justify-center mb-5 animate-pulse-slow shadow-inner">
+                            <i data-lucide="network" class="w-10 h-10 text-gray-500"></i>
+                        </div>
+                        <h3 class="text-gray-300 font-semibold mb-2 tracking-wide">Awaiting Telemetry Data</h3>
+                        <p class="text-gray-500 text-sm max-w-sm">Push parameters to the cloud to generate real-time AI engineering insights and efficiency metrics.</p>
+                    </div>
+
+                    <!-- API Error Section -->
+                    <div id="api-error-alert" class="hidden mb-4 p-4 rounded-lg bg-red-500/10 border border-red-500/30 flex items-start gap-3 fade-in">
+                        <i data-lucide="alert-triangle" class="w-5 h-5 text-red-500 shrink-0 mt-0.5"></i>
+                        <div>
+                            <h4 class="text-sm font-semibold text-red-400 mb-1">Diagnostic System Error</h4>
+                            <p id="api-error-text" class="text-sm text-red-300/80"></p>
+                        </div>
+                    </div>
+
+                    <!-- Results Section -->
+                    <div id="results-section" class="hidden flex-col h-full gap-5">
+                        
+                        <!-- Top HUD: Status & Power -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="p-4 rounded-xl bg-black/30 border border-white/5 flex flex-col justify-center items-start relative overflow-hidden">
+                                <div class="absolute -right-4 -bottom-4 opacity-5"><i data-lucide="activity" class="w-20 h-20"></i></div>
+                                <span class="text-[11px] text-gray-500 font-mono uppercase tracking-widest mb-2 font-semibold">System Status</span>
+                                <div id="status-badge" class="px-4 py-1.5 rounded-full text-sm font-semibold tracking-wide flex items-center gap-2 badge-blue">
+                                    <div id="status-dot" class="w-2 h-2 rounded-full bg-current"></div>
+                                    <span id="status-text">Normal Operation</span>
+                                </div>
+                            </div>
+                            
+                            <div class="power-card p-4 rounded-xl flex flex-col justify-center items-end relative overflow-hidden">
+                                <div class="absolute -left-4 -bottom-4 opacity-5"><i data-lucide="zap" class="w-20 h-20"></i></div>
+                                <span class="text-[11px] text-gray-500 font-mono uppercase tracking-widest mb-1 font-semibold">Live Power Draw</span>
+                                <div class="text-2xl font-mono text-electric-cyan font-bold tracking-tight flex items-baseline gap-1">
+                                    <span id="power-display">0</span>
+                                    <span class="text-sm text-gray-400 font-medium">W</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Level Efficiency Tip -->
+                        <div id="sys-eff-card" class="eff-tip rounded-r-lg p-3.5 flex items-start gap-3">
+                            <i data-lucide="leaf" class="w-5 h-5 text-green-400 shrink-0 mt-0.5"></i>
+                            <div>
+                                <h4 class="text-xs font-semibold text-green-400/80 uppercase tracking-widest mb-0.5">System Efficiency</h4>
+                                <p id="sys-eff-text" class="text-sm text-green-100/90 leading-snug font-medium"></p>
+                            </div>
+                        </div>
+
+                        <!-- AI Structured Output Blocks -->
+                        <div class="flex-1 space-y-4 relative pl-5">
+                            <div class="data-line"></div>
+                            
+                            <!-- Explanation -->
+                            <div class="bg-navy-800/60 rounded-lg p-4.5 border border-white/5 hover:border-electric-cyan/40 transition-all shadow-sm">
+                                <h4 class="text-xs font-mono text-electric-cyan mb-2.5 flex items-center gap-2 uppercase tracking-wide font-semibold">
+                                    <i data-lucide="info" class="w-4 h-4"></i> Condition Analysis
+                                </h4>
+                                <p id="out-explanation" class="text-[15px] text-gray-300 leading-relaxed font-medium"></p>
+                            </div>
+
+                            <!-- Reasoning -->
+                            <div class="bg-navy-800/60 rounded-lg p-4.5 border border-white/5 hover:border-electric-cyan/40 transition-all shadow-sm">
+                                <h4 class="text-xs font-mono text-electric-cyan mb-2.5 flex items-center gap-2 uppercase tracking-wide font-semibold">
+                                    <i data-lucide="microscope" class="w-4 h-4"></i> Engineering Diagnostics
+                                </h4>
+                                <p id="out-reasoning" class="text-[15px] text-gray-300 leading-relaxed font-medium"></p>
+                            </div>
+
+                            <!-- Recommendation / Safety -->
+                            <div class="bg-navy-800/60 rounded-lg p-4.5 border border-white/5 hover:border-electric-cyan/40 transition-all relative overflow-hidden shadow-sm">
+                                <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-electric-blue/10 to-transparent rounded-bl-[100px] pointer-events-none"></div>
+                                <h4 class="text-xs font-mono text-electric-cyan mb-2.5 flex items-center gap-2 uppercase tracking-wide font-semibold">
+                                    <i data-lucide="shield-check" class="w-4 h-4"></i> AI Recommendation & Safety
+                                </h4>
+                                <p id="out-recommendation" class="text-[15px] text-gray-300 leading-relaxed font-semibold mb-2"></p>
+                                <div class="mt-2 text-sm text-electric-cyan/80 bg-electric-cyan/5 px-3 py-2 rounded font-mono border border-electric-cyan/10">
+                                    <i data-lucide="zap" class="w-3.5 h-3.5 inline mr-1"></i>
+                                    <span id="out-safety"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="text-center text-xs text-gray-500 font-mono fade-in flex items-center justify-center gap-4" style="animation-delay: 0.2s;">
+            <span>System UI v3.0</span>
+            <span class="w-1 h-1 rounded-full bg-gray-700"></span>
+            <span>Powered by <span class="text-electric-cyan font-semibold">Gemini 2.5</span></span>
+            <span class="w-1 h-1 rounded-full bg-gray-700"></span>
+            <span class="flex items-center gap-1 text-green-400 font-semibold"><i data-lucide="radio" class="w-3 h-3"></i> Cloud Online</span>
+        </footer>
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        lucide.createIcons();
+
+        const form = document.getElementById('analysis-form');
+        const emptyState = document.getElementById('empty-state');
+        const resultsSection = document.getElementById('results-section');
+        const apiErrorAlert = document.getElementById('api-error-alert');
+        const apiErrorText = document.getElementById('api-error-text');
+        const processingBadge = document.getElementById('processing-badge');
+        const btn = document.getElementById('analyze-btn');
+        const statusBadge = document.getElementById('status-badge');
+        const statusText = document.getElementById('status-text');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const v = document.getElementById('voltage').value;
+            const i = document.getElementById('current').value;
+            const load = document.getElementById('load').value;
+
+            // Loading state
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Running Analysis...';
+            btn.classList.add('opacity-70', 'cursor-not-allowed', 'scale-[0.98]');
+            lucide.createIcons();
+            
+            if(!resultsSection.classList.contains('hidden')) {
+                resultsSection.classList.add('opacity-40');
+            } else {
+                emptyState.classList.add('hidden');
+                processingBadge.classList.remove('hidden');
+                processingBadge.classList.add('flex');
+            }
+            apiErrorAlert.classList.add('hidden');
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ voltage: v, current: i, load: load })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) throw new Error(data.error || 'Server connection failed.');
+
+                // Basic Metrics
+                document.getElementById('power-display').innerText = parseFloat(data.power).toLocaleString();
+                document.getElementById('sys-eff-text').innerText = data.efficiency_tip;
+
+                let expl = data.context; 
+                let reason = "N/A";
+                let rec = "N/A";
+                let safe = "N/A";
+
+                try {
+                    const aiData = JSON.parse(data.ai_insights);
+                    expl = aiData.explanation || data.context;
+                    reason = aiData.reasoning || "";
+                    rec = aiData.recommendation || "";
+                    safe = aiData.safety || "Maintain standard safety protocols.";
+                    
+                    // Optional AI efficiency logic injection
+                    if(aiData.efficiency && aiData.efficiency !== "N/A") {
+                        document.getElementById('sys-eff-text').innerText += " " + aiData.efficiency;
+                    }
+                } catch (jsonErr) {
+                    console.error("AI JSON Parse Error", jsonErr);
+                    expl = data.ai_insights; // fallback
+                }
+
+                // Update Visual Status
+                let color = 'blue';
+                if (data.fault_type === 'Normal Operation') color = 'blue';
+                else if (data.fault_type === 'Undervoltage') color = 'yellow';
+                else color = 'red'; 
+
+                statusBadge.classList.remove('badge-red', 'badge-blue', 'badge-yellow');
+                statusBadge.classList.add(`badge-${color}`);
+                statusText.innerText = data.fault_type;
+
+                // Animate Text Injection
+                typewriterEffect(document.getElementById('out-explanation'), expl, 8);
+                typewriterEffect(document.getElementById('out-reasoning'), reason, 12);
+                typewriterEffect(document.getElementById('out-recommendation'), rec, 15);
+                typewriterEffect(document.getElementById('out-safety'), safe, 20);
+
+            } catch (err) {
+                apiErrorText.innerText = err.message;
+                apiErrorAlert.classList.remove('hidden');
+                
+                statusBadge.classList.remove('badge-red', 'badge-blue', 'badge-yellow');
+                statusBadge.classList.add('badge-red');
+                statusText.innerText = "System Error";
+                
+                document.getElementById('power-display').innerText = "0";
+                document.getElementById('sys-eff-text').innerText = "System offline.";
+            } finally {
+                btn.innerHTML = '<i data-lucide="scan-line" class="w-5 h-5"></i> Run AI Diagnostics';
+                btn.classList.remove('opacity-70', 'cursor-not-allowed', 'scale-[0.98]');
+                lucide.createIcons();
+                
+                processingBadge.classList.add('hidden');
+                processingBadge.classList.remove('flex');
+                
+                resultsSection.classList.remove('hidden', 'opacity-40');
+                if(!resultsSection.classList.contains('fade-in')) resultsSection.classList.add('fade-in');
+            }
+        });
+
+        // Simple typewriter
+        function typewriterEffect(element, text, speed) {
+            if (!text) return;
+            element.innerHTML = '';
+            let i = 0;
+            element.style.minHeight = element.offsetHeight + 'px';
+            function type() {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                    setTimeout(type, speed);
+                } else {
+                    element.style.minHeight = 'auto';
+                }
+            }
+            type();
+        }
+    </script>
+</body>
+</html>
